@@ -24,16 +24,20 @@
     </nav>
 
     <div class="container-fluid mt-4">
+      
       <div class="row">
         
         <div class="col-lg-8 mb-4">
           <div class="card shadow-sm border-0">
-            <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center border-bottom-0">
-              <h5 class="card-title-custom mb-0">Inventario de Equipos</h5>
-              <div class="search-box">
-                <input type="text" class="form-control form-control-sm" placeholder="Buscar herramienta...">
+            <div class="card-header bg-white py-3 border-bottom-0">
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="card-title-custom mb-0">📊 Inventario de Equipos</h5>
+                <div class="search-box">
+                  <input type="text" class="form-control form-control-sm" id="buscador-inventario" placeholder="Buscar herramienta...">
+                </div>
               </div>
             </div>
+            
             <div class="card-body p-0">
               <div class="table-responsive">
                 <table class="table table-hover align-middle mb-0">
@@ -58,7 +62,7 @@
           
           <div class="card shadow-sm border-0 mb-4">
             <div class="card-header bg-white py-3 border-bottom-0">
-                <h5 class="card-title-custom mb-0">Registrar Préstamo</h5>
+                <h5 class="card-title-custom mb-0">📝 Registrar Préstamo</h5>
             </div>
             <div class="card-body pt-0">
               <form id="form-prestamo">
@@ -84,7 +88,7 @@
                 </div>
                 
                 <button type="submit" class="btn btn-action w-100 d-flex align-items-center justify-content-center gap-2">
-                  <span></span> Registrar Préstamo
+                  <span>⚡</span> Registrar Préstamo
                 </button>
               </form>
             </div>
@@ -100,6 +104,45 @@
             </div>
           </div>
 
+        </div>
+      </div>
+
+      <div class="row mt-2 mb-5">
+        <div class="col-12">
+          <div class="card shadow-sm border-0">
+            <div class="card-header bg-white py-3 border-bottom-0">
+              <h5 class="card-title-custom mb-0">📜 Historial de Préstamos Finalizados</h5>
+            </div>
+            <div class="card-body p-0">
+              <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0 text-center">
+                  <thead class="table-light">
+                    <tr>
+                      <th scope="col">Alumno</th>
+                      <th scope="col">Equipo</th>
+                      <th scope="col">Hora de Préstamo</th>
+                      <th scope="col">Hora de Devolución</th>
+                      <th scope="col">Estado</th>
+                    </tr>
+                  </thead>
+                  <tbody id="tabla-historial">
+                    </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="toast-container position-fixed bottom-0 end-0 p-3">
+      <div id="liveToast" class="toast align-items-center text-bg-primary border-0" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="d-flex">
+          <div class="toast-body" id="toastMessage">
+            Mensaje de prueba.
+          </div>
+          <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
         </div>
       </div>
     </div>
