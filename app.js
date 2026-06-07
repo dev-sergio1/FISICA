@@ -1,7 +1,5 @@
-// ==========================================
-// 1. DATOS DE PRUEBA (ESTADO INICIAL)
-// ==========================================
-// Simulamos la base de datos localmente para el prototipo
+//DATOS
+
 let inventario = [
     { codigo: "FIS-001", nombre: "Multímetro Digital", info: "Marca Fluke - Precisión alta", categoria: "Electrónica", cantidad: 5, estado: "Disponible" },
     { codigo: "FIS-002", nombre: "Osciloscopio de Rayos Catódicos", info: "20 MHz - Canales duales", categoria: "Ondas", cantidad: 2, estado: "Prestado" },
@@ -14,16 +12,14 @@ let prestamosActivos = [
     { id: 2, alumno: "Ana Valeria Torres", equipoCodigo: "FIS-001", equipoNombre: "Multímetro", hora: "5:30 PM" }
 ];
 
-// ==========================================
-// 2. FUNCIONES DE RENDERIZADO (DIBUJAR EN PANTALLA)
-// ==========================================
+let historialPrestamos = []; 
+//FUNCIONES DE RENDERIZADO
 
-// Renderizar la Tabla de Inventario (Panel Izquierdo)
 function actualizarTablaInventario() {
     const tbody = document.getElementById("tabla-inventario");
     if (!tbody) return;
     
-    tbody.innerHTML = ""; // Limpiar filas anteriores
+    tbody.innerHTML = ""; 
     
     inventario.forEach(equipo => {
         let badgeClass = "";
@@ -33,114 +29,196 @@ function actualizarTablaInventario() {
 
         const fila = `
             <tr>
-              <td class="ps-4 fw-bold text-secondary">${equipo.codigo}</td>
-              <td>
+            <td class="ps-4 fw-bold text-secondary">${equipo.codigo}</td>
+            <td>
                 <div class="fw-bold text-dark">${equipo.nombre}</div>
                 <small class="text-muted">${equipo.info}</small>
-              </td>
-              <td><span class="badge bg-light text-dark border">${equipo.categoria}</span></td>
-              <td class="text-center fw-semibold">${equipo.cantidad}</td>
-              <td class="text-center">
+            </td>
+            <td><span class="badge bg-light text-dark border">${equipo.categoria}</span></td>
+            <td class="text-center fw-semibold">${equipo.cantidad}</td>
+            <td class="text-center">
                 <span class="badge ${badgeClass}">${equipo.estado}</span>
-              </td>
+            </td>
             </tr>
         `;
         tbody.innerHTML += fila;
     });
 }
 
-// Renderizar Equipos en Uso (Panel Derecho Inferior)
 function actualizarListaDevoluciones() {
     const listaContenedor = document.getElementById("lista-devoluciones");
     if (!listaContenedor) return;
     
-    listaContenedor.innerHTML = ""; // Limpiar lista anterior
+    listaContenedor.innerHTML = ""; 
     
     prestamosActivos.forEach(prestamo => {
         const elemento = `
             <div class="active-loan-item d-flex justify-content-between align-items-center p-3 mb-2 rounded border bg-white">
-              <div>
+            <div>
                 <div class="fw-bold text-dark text-truncate" style="max-width: 180px;">${prestamo.alumno}</div>
                 <small class="text-muted d-block">${prestamo.equipoNombre} (${prestamo.equipoCodigo})</small>
-                <span class="badge bg-secondary-subtle text-secondary-emphasis custom-mini-badge">Devuelve: ${prestamo.hora}</span>
-              </div>
-              <button class="btn btn-sm btn-devolver d-flex align-items-center gap-1" onclick="procesarDevolucion(${prestamo.id})">
+                <span class="badge bg-secondary-subtle text-secondary-emphasis custom-mini-badge">Prestado: ${prestamo.hora}</span>
+            </div>
+            <button class="btn btn-sm btn-devolver d-flex align-items-center gap-1" onclick="procesarDevolucion(${prestamo.id})">
                 <span>↩️</span> Devolver
-              </button>
+            </button>
             </div>
         `;
         listaContenedor.innerHTML += elemento;
     });
 }
 
-// ==========================================
-// 3. LOGICA DE NEGOCIO (ACCIONES)
-// ==========================================
+function actualizarTablaHistorial() {
+    const tbodyHistorial = document.getElementById("tabla-historial");
+    if (!tbodyHistorial) return;
+    
+    if (historialPrestamos.length === 0) {
+        tbodyHistorial.innerHTML = `<tr><td colspan="5" class="text-muted py-4">Aún no hay préstamos finalizados en esta sesión.</td></tr>`;
+        return;
+    }
+    
+    tbodyHistorial.innerHTML = ""; 
+    
+    [...historialPrestamos].reverse().forEach(registro => {
+        const fila = `
+            <tr>
+            <td class="fw-bold text-dark">${registro.alumno}</td>
+            <td class="text-muted">${registro.equipoNombre}</td>
+            <td><span class="badge bg-light text-secondary border">${registro.horaPrestamo}</span></td>
+            <td><span class="badge bg-primary-subtle text-primary border">${registro.horaDevolucion}</span></td>
+            <td><span class="badge bg-success text-white">Finalizado</span></td>
+            </tr>
+        `;
+        tbodyHistorial.innerHTML += fila;
+    });
+}
+//PRESTAMO
 
-// Registrar un nuevo préstamo desde el formulario
 document.getElementById("form-prestamo").addEventListener("submit", function(event) {
-    event.preventDefault(); // Evita que la página se recargue
+    event.preventDefault(); 
     
-    const nombre = document.getElementById("alumnoNombre").value;
-    const codigo = document.getElementById("alumnoCodigo").value;
-    const equipoCodigo = document.getElementById("equipoSeleccionado").value;
+    const nombreInput = document.getElementById("alumnoNombre");
+    const codigoInput = document.getElementById("alumnoCodigo");
+    const equipoInput = document.getElementById("equipoSeleccionado");
+
+    const nombre = nombreInput.value.trim();
+    const codigo = codigoInput.value.trim();
+    const equipoCodigo = equipoInput.value;
     
-    // Buscar la información del equipo seleccionado
+    // Validaciones
+    if (!nombre || !codigo || !equipoCodigo) {
+        mostrarAlertaToast("Por favor, completa todos los campos antes de registrar el préstamo.", "danger");
+        return; 
+    }
+
+    const formatoCodigoRegex = /^\d{8}$/; 
+    if (!formatoCodigoRegex.test(codigo)) {
+        mostrarAlertaToast("El código universitario debe tener exactamente 8 dígitos numéricos.", "warning");
+        codigoInput.focus(); 
+        return;
+    }
+    
     const equipo = inventario.find(e => e.codigo === equipoCodigo);
     
     if (equipo && equipo.cantidad > 0) {
-        // 1. Restar 1 a la cantidad del inventario
         equipo.cantidad -= 1;
         if (equipo.cantidad === 0) {
             equipo.estado = "Prestado";
         }
         
-        // 2. Agregar el préstamo a la lista activa
         const nuevoPrestamo = {
-            id: Date.now(), // Genera un ID único basado en el tiempo
+            id: Date.now(), 
             alumno: nombre,
             equipoCodigo: equipo.codigo,
-            equipoNombre: equipo.nombre.split(" ")[0], // Toma la primera palabra como nombre corto
-            hora: "Por definir"
+            equipoNombre: equipo.nombre.split(" ")[0], 
+            hora: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) 
         };
         prestamosActivos.push(nuevoPrestamo);
         
-        // 3. Actualizar la interfaz y limpiar formulario
         actualizarTablaInventario();
         actualizarListaDevoluciones();
         document.getElementById("form-prestamo").reset();
-        alert(`¡Préstamo registrado con éxito para ${nombre}!`);
+        
+        mostrarAlertaToast(`¡Préstamo de ${nuevoPrestamo.equipoNombre} registrado para ${nombre}!`, "success");
     } else {
-        alert("Lo sentimos, este equipo no tiene existencias disponibles en este momento.");
+        mostrarAlertaToast("Lo sentimos, este equipo no tiene existencias disponibles.", "danger");
     }
 });
 
-// Procesar la devolución de un equipo
 function procesarDevolucion(idPrestamo) {
-    // Encontrar el préstamo
     const prestamoIndex = prestamosActivos.findIndex(p => p.id === idPrestamo);
     if (prestamoIndex === -1) return;
     
     const prestamo = prestamosActivos[prestamoIndex];
     
-    // Devolver el equipo al inventario
     const equipo = inventario.find(e => e.codigo === prestamo.equipoCodigo);
     if (equipo) {
         equipo.cantidad += 1;
-        equipo.estado = "Disponible"; // Vuelve a estar disponible
+        equipo.estado = "Disponible"; 
     }
     
-    // Eliminar del listado de préstamos activos
+    const registroHistorial = {
+        alumno: prestamo.alumno,
+        equipoNombre: prestamo.equipoNombre,
+        horaPrestamo: prestamo.hora,
+        horaDevolucion: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
+    };
+    
+    historialPrestamos.push(registroHistorial);
     prestamosActivos.splice(prestamoIndex, 1);
     
-    // Refrescar los paneles visuales
     actualizarTablaInventario();
     actualizarListaDevoluciones();
+    actualizarTablaHistorial();
+    
+    mostrarAlertaToast(`¡Equipo devuelto por ${prestamo.alumno} con éxito!`, "success");
 }
+///BUSQUEDA
 
-// ==========================================
-// 4. INICIALIZACIÓN
-// ==========================================
-// Ejecutar las funciones al cargar la página por primera vez
+document.getElementById("buscador-inventario").addEventListener("input", function(event) {
+    const textoBuscado = event.target.value.toLowerCase();
+    const tabla = document.getElementById("tabla-inventario");
+    const filas = tabla.getElementsByTagName("tr");
+    
+    for (let i = 0; i < filas.length; i++) {
+        const codigo = filas[i].getElementsByTagName("td")[0].textContent.toLowerCase();
+        const nombre = filas[i].getElementsByTagName("td")[1].textContent.toLowerCase();
+        
+        if (codigo.includes(textoBuscado) || nombre.includes(textoBuscado)) {
+            filas[i].style.display = ""; 
+        } else {
+            filas[i].style.display = "none"; 
+        }
+    }
+});
+//INTERFAZ
+
+function mostrarAlertaToast(mensaje, tipoDeAlerta) {
+    const toastElement = document.getElementById('liveToast');
+    const toastBody = document.getElementById('toastMessage');
+    
+    toastBody.textContent = mensaje;
+    
+    toastElement.classList.remove('text-bg-success', 'text-bg-danger', 'text-bg-warning', 'text-bg-primary');
+    toastElement.classList.add(`text-bg-${tipoDeAlerta}`);
+    
+    if (tipoDeAlerta === 'warning') {
+        toastElement.classList.remove('text-white');
+        toastElement.classList.add('text-dark');
+        const closeBtn = toastElement.querySelector('.btn-close');
+        closeBtn.classList.remove('btn-close-white');
+    } else {
+        toastElement.classList.add('text-white');
+        toastElement.classList.remove('text-dark');
+        const closeBtn = toastElement.querySelector('.btn-close');
+        closeBtn.classList.add('btn-close-white');
+    }
+
+    const toast = new bootstrap.Toast(toastElement);
+    toast.show();
+}
+//INICIALIZACIÓN
+
 actualizarTablaInventario();
 actualizarListaDevoluciones();
+actualizarTablaHistorial();
